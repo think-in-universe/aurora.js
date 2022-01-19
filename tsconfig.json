@@ -12,14 +12,16 @@
     "src/utils.ts"
   ],
   "extends": "@tsconfig/node14/tsconfig.json",
+  "target": "ES6",
+  "lib": ["DOM", "ES6", "DOM.Iterable", "ScriptHost", "ES2016.Array.Include"],
   "compilerOptions": {
     "outDir": "./lib",
-    "target": "es2020",
+    "target": "ES6",
     "module": "es2020",
     "moduleResolution": "node",
     "declaration": true,
     "isolatedModules": true,
-    "strict": true,
+    "strict": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,

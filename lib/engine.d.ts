@@ -5,6 +5,7 @@ import { KeyStore } from './key_store.js';
 import { Quantity, Result, U256 } from './prelude.js';
 import { SubmitResult, OutOfGas } from './schema.js';
 import { TransactionID } from './transaction.js';
+import { Buffer } from 'buffer';
 import * as NEAR from 'near-api-js';
 import { ResErr } from '@hqoss/monads/dist/lib/result/result';
 export { getAddress as parseAddress } from '@ethersproject/address';
@@ -46,9 +47,9 @@ export declare class AddressState {
     address: Address;
     nonce: U256;
     balance: Quantity;
-    code?: Uint8Array | undefined;
+    code?: Bytecode;
     storage: AddressStorage;
-    constructor(address: Address, nonce?: U256, balance?: Quantity, code?: Uint8Array | undefined, storage?: AddressStorage);
+    constructor(address: Address, nonce?: U256, balance?: Quantity, code?: Bytecode, storage?: AddressStorage);
 }
 export declare const enum EngineStorageKeyPrefix {
     Config = 0,

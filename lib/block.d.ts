@@ -40,11 +40,11 @@ export declare class BlockProxy {
     protected readonly chunks: ChunkResult[];
     protected readonly transactions: TransactionID[];
     protected readonly outcomes: NEAR.providers.FinalExecutionOutcome[];
-    readonly near?: NEARBlock | undefined;
+    readonly near?: NEARBlock;
     readonly number: BlockHeight;
     readonly hash: BlockHash;
     readonly parentHash: BlockHash;
-    protected constructor(provider: NEAR.providers.Provider, header: BlockHeader, options: BlockOptions, chunks: ChunkResult[], transactions: TransactionID[], outcomes: NEAR.providers.FinalExecutionOutcome[], near?: NEARBlock | undefined);
+    protected constructor(provider: NEAR.providers.Provider, header: BlockHeader, options: BlockOptions, chunks: ChunkResult[], transactions: TransactionID[], outcomes: NEAR.providers.FinalExecutionOutcome[], near?: NEARBlock);
     static lookup(provider: NEAR.providers.Provider, id: BlockID): Promise<Result<boolean, string>>;
     static fetch(provider: NEAR.providers.Provider, id: BlockID, options?: BlockOptions): Promise<Result<BlockProxy, string>>;
     getMetadata(): BlockMetadata;

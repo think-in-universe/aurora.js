@@ -19,13 +19,13 @@ declare const _default: {
     formatU256(value: number | bigint): string;
     base58ToHex(input: string): string;
     base58ToBytes(input: string): Uint8Array;
-    bytesToHex(input: Uint8Array | null | undefined): string;
+    bytesToHex(input: Uint8Array): string;
     hexToBase58(input: string): string;
     hexToBytes(input: string): Uint8Array;
     hexToInt(input: string): number;
     intToHex(input: number | bigint): string;
     ethErc20ToNep141(tokenAddress: account.Address, networkId: config.NetworkID): account.AccountID;
-    exportJSON(input?: Record<string, unknown> | Record<string, unknown>[] | undefined): any;
+    exportJSON(input?: Record<string, unknown> | Record<string, unknown>[]): any;
     TransactionID: typeof transaction.TransactionID;
     Transaction: typeof transaction.Transaction;
     BeginBlockArgs: typeof schema.BeginBlockArgs;

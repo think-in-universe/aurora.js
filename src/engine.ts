@@ -330,7 +330,7 @@ export class Engine {
       const inputBytes = this.prepareInput(input);
       try {
         const rawTransaction = parseRawTransaction(inputBytes); // throws Error
-        if (rawTransaction.gasLimit.toBigInt() < 21000n) {
+        if (rawTransaction.gasLimit.toBigInt() < BigInt(21000)) {
           // See: https://github.com/aurora-is-near/aurora-relayer/issues/17
           return Err('ERR_INTRINSIC_GAS');
         }
