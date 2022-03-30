@@ -383,6 +383,12 @@ export class ViewCallArgs extends Assignable {
   }
 }
 
+export class GetErc20FromNep141CallArgs extends Assignable {
+  constructor(public readonly nep141: string) {
+    super();
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 const SCHEMA = new Map<Function, any>([
   [
@@ -599,6 +605,13 @@ const SCHEMA = new Map<Function, any>([
         ['amount', [32]],
         ['input', ['u8']],
       ],
+    },
+  ],
+  [
+    GetErc20FromNep141CallArgs,
+    {
+      kind: 'struct',
+      fields: [['nep141', 'string']],
     },
   ],
   [RawU256, { kind: 'struct', fields: [['value', [32]]] }],

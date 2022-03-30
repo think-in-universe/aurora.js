@@ -177,4 +177,8 @@ export declare class ViewCallArgs extends Assignable {
     readonly input: Uint8Array;
     constructor(sender: Uint8Array, address: Uint8Array, amount: Uint8Array, input: Uint8Array);
 }
+export declare class GetErc20FromNep141CallArgs extends Assignable {
+    readonly nep141: string;
+    constructor(nep141: string);
+}
 export {};

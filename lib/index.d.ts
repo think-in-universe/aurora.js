@@ -52,6 +52,7 @@ declare const _default: {
     InitCallArgs: typeof schema.InitCallArgs;
     RawU256: typeof schema.RawU256;
     ViewCallArgs: typeof schema.ViewCallArgs;
+    GetErc20FromNep141CallArgs: typeof schema.GetErc20FromNep141CallArgs;
     Left: typeof prelude.Left;
     Right: typeof prelude.Right;
     isLeft: typeof prelude.isLeft;

@@ -22,6 +22,7 @@ import {
   FungibleTokenMetadata,
   TransactionStatus,
   OutOfGas,
+  GetErc20FromNep141CallArgs,
 } from './schema.js';
 import { TransactionID } from './transaction.js';
 
@@ -424,11 +425,10 @@ export class Engine {
     nep141: AccountID,
     options?: ViewOptions
   ): Promise<Result<Address, Error>> {
-    const args = Buffer.from(nep141.id, 'utf-8');
-
+    const args = new GetErc20FromNep141CallArgs(nep141.id);
     const result = await this.callFunction(
       'get_erc20_from_nep141',
-      args,
+      args.encode(),
       options
     );
 
