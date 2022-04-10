@@ -14,7 +14,7 @@ import { KeyStore } from './key_store.js';
 import { Err, Ok, Quantity, Result, U256 } from './prelude.js';
 import {
   SubmitResult,
-  FunctionCallArgs,
+  FunctionCallArgsV2,
   GetStorageAtArgs,
   InitCallArgs,
   NewCallArgs,
@@ -23,9 +23,13 @@ import {
   TransactionStatus,
   OutOfGas,
   GetErc20FromNep141CallArgs,
+  GasBurned,
+  WrappedSubmitResult,
+  CallArgs,
 } from './schema.js';
 import { TransactionID } from './transaction.js';
 
+import { base58ToBytes } from './utils.js';
 import { defaultAbiCoder } from '@ethersproject/abi';
 import { arrayify as parseHexString } from '@ethersproject/bytes';
 import { parse as parseRawTransaction } from '@ethersproject/transactions';
@@ -46,6 +50,8 @@ export type Error = string;
 export interface TransactionOutcome {
   id: TransactionID;
   output: Uint8Array;
+  gasBurned?: GasBurned;
+  tx?: string;
 }
 
 export interface BlockInfo {
@@ -100,6 +106,11 @@ export type EngineStorage = Map<Address, AddressState>;
 
 export class EngineState {
   constructor(public storage: EngineStorage = new Map()) {}
+}
+
+export interface TransactionErrorDetails {
+  tx?: string;
+  gasBurned?: GasBurned;
 }
 
 const DEFAULT_NETWORK_ID = 'local';
@@ -313,12 +324,15 @@ export class Engine {
 
   async call(
     contract: Address,
-    input: Uint8Array | string
+    input: Uint8Array | string,
+    value?: number | bigint | string
   ): Promise<Result<Uint8Array, Error>> {
-    const args = new FunctionCallArgs(
-      contract.toBytes(),
-      this.prepareInput(input)
-    );
+    const inner_args = new FunctionCallArgsV2({
+      contract: contract.toBytes(),
+      value: this.prepareAmount(value),
+      input: this.prepareInput(input),
+    });
+    const args = new CallArgs({ functionCallArgsV2: inner_args });
     return (await this.callMutativeFunction('call', args.encode())).map(
       ({ output }) => output
     );
@@ -326,7 +340,7 @@ export class Engine {
 
   async submit(
     input: Uint8Array | string
-  ): Promise<Result<SubmitResult, Error>> {
+  ): Promise<Result<WrappedSubmitResult, Error>> {
     try {
       const inputBytes = this.prepareInput(input);
       try {
@@ -339,9 +353,15 @@ export class Engine {
         //console.error(error); // DEBUG
         return Err('ERR_INVALID_TX');
       }
-      return (
-        await this.callMutativeFunction('submit', inputBytes)
-      ).map(({ output }) => SubmitResult.decode(Buffer.from(output)));
+      return (await this.callMutativeFunction('submit', inputBytes)).map(
+        ({ output, gasBurned, tx }) => {
+          return new WrappedSubmitResult(
+            SubmitResult.decode(Buffer.from(output)),
+            gasBurned,
+            tx
+          );
+        }
+      );
     } catch (error) {
       //console.error(error); // DEBUG
       return Err(error.message);
@@ -383,6 +403,9 @@ export class Engine {
     options?: ViewOptions
   ): Promise<Result<Bytecode, Error>> {
     const args = address.toBytes();
+    if (typeof options === 'object' && options.block) {
+      options.block = ((options.block as number) + 1) as BlockID;
+    }
     return await this.callFunction('get_code', args, options);
   }
 
@@ -540,9 +563,12 @@ export class Engine {
         typeof result.status === 'object' &&
         typeof result.status.SuccessValue === 'string'
       ) {
+        const transactionId = result?.transaction_outcome?.id;
         return Ok({
           id: TransactionID.fromHex(result.transaction.hash),
           output: Buffer.from(result.status.SuccessValue, 'base64'),
+          tx: transactionId,
+          gasBurned: await this.transactionGasBurned(transactionId),
         });
       }
       return Err(result.toString()); // FIXME: unreachable?
@@ -550,15 +576,20 @@ export class Engine {
       //assert(error instanceof ServerTransactionError);
       switch (error?.type) {
         case 'FunctionCallError': {
+          const transactionId = error?.transaction_outcome?.id;
+          const details: TransactionErrorDetails = {
+            tx: transactionId,
+            gasBurned: await this.transactionGasBurned(transactionId),
+          };
           const errorKind = error?.kind?.ExecutionError;
           if (errorKind) {
             const errorCode = errorKind.replace(
               'Smart contract panicked: ',
               ''
             );
-            return Err(errorCode);
+            return Err(this.errorWithDetails(errorCode, details));
           }
-          return Err(error.message);
+          return Err(this.errorWithDetails(error.message, details));
         }
         case 'MethodNotFound':
           return Err(error.message);
@@ -569,10 +600,42 @@ export class Engine {
     }
   }
 
+  private prepareAmount(value?: number | bigint | string): Buffer {
+    if (typeof value === 'undefined') return toBufferBE(BigInt(0), 32);
+
+    const number = BigInt(value);
+    return toBufferBE(number, 32);
+  }
+
   private prepareInput(args?: Uint8Array | string): Buffer {
     if (typeof args === 'undefined') return Buffer.alloc(0);
     if (typeof args === 'string')
       return Buffer.from(parseHexString(args as string));
     return Buffer.from(args);
+  }
+
+  private errorWithDetails(
+    message: string,
+    details: TransactionErrorDetails
+  ): string {
+    return `${message}|${JSON.stringify(details)}`;
+  }
+
+  private async transactionGasBurned(id: string): Promise<GasBurned> {
+    try {
+      const transactionStatus = await this.near.connection.provider.txStatus(
+        base58ToBytes(id),
+        this.contractID.toString()
+      );
+      const receiptsGasBurned = transactionStatus.receipts_outcome.reduce(
+        (sum, value) => sum + value.outcome.gas_burnt,
+        0
+      );
+      const transactionGasBurned =
+        transactionStatus.transaction_outcome.outcome.gas_burnt || 0;
+      return receiptsGasBurned + transactionGasBurned;
+    } catch (error) {
+      return 0;
+    }
   }
 }

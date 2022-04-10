@@ -2,6 +2,7 @@
 import { Result } from '@hqoss/monads';
 import BN from 'bn.js';
 import { utils } from 'near-api-js';
+export declare type GasBurned = number | bigint | undefined;
 declare abstract class Assignable {
     encode(): Uint8Array;
 }
@@ -23,6 +24,12 @@ export declare class SubmitResult {
     constructor(result: SubmitResultV2 | SubmitResultV1 | LegacyExecutionResult);
     output(): Result<Uint8Array, ExecutionError>;
     static decode(input: Buffer): SubmitResult;
+}
+export declare class WrappedSubmitResult extends Assignable {
+    submitResult: SubmitResult;
+    gasBurned: GasBurned;
+    tx: string | undefined;
+    constructor(submitResult: SubmitResult, gasBurned: GasBurned, tx: string | undefined);
 }
 export declare type LegacyStatusFalse = 'LegacyStatusFalse';
 export declare type ExecutionError = RevertStatus | OutOfGas | OutOfFund | OutOfOffset | CallTooDeep | LegacyStatusFalse;
@@ -95,10 +102,29 @@ export declare class LegacyExecutionResult extends Assignable {
     });
     static decode(input: Buffer): LegacyExecutionResult;
 }
-export declare class FunctionCallArgs extends Assignable {
-    contract: Uint8Array;
-    input: Uint8Array;
-    constructor(contract: Uint8Array, input: Uint8Array);
+export declare class CallArgs extends utils.enums.Enum {
+    readonly functionCallArgsV2?: FunctionCallArgsV2;
+    readonly functionCallArgsV1?: FunctionCallArgsV1;
+    static decode(input: Buffer): CallArgs;
+    encode(): Uint8Array;
+}
+export declare class FunctionCallArgsV2 extends Assignable {
+    readonly contract: Uint8Array;
+    readonly value: Uint8Array;
+    readonly input: Uint8Array;
+    constructor(args: {
+        contract: Uint8Array;
+        value: Uint8Array;
+        input: Uint8Array;
+    });
+}
+export declare class FunctionCallArgsV1 extends Assignable {
+    readonly contract: Uint8Array;
+    readonly input: Uint8Array;
+    constructor(args: {
+        contract: Uint8Array;
+        input: Uint8Array;
+    });
 }
 export declare class GetChainID extends Assignable {
     constructor();

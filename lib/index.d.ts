@@ -31,6 +31,7 @@ declare const _default: {
     BeginBlockArgs: typeof schema.BeginBlockArgs;
     BeginChainArgs: typeof schema.BeginChainArgs;
     SubmitResult: typeof schema.SubmitResult;
+    WrappedSubmitResult: typeof schema.WrappedSubmitResult;
     SuccessStatus: typeof schema.SuccessStatus;
     RevertStatus: typeof schema.RevertStatus;
     OutOfGas: typeof schema.OutOfGas;
@@ -41,7 +42,9 @@ declare const _default: {
     SubmitResultV2: typeof schema.SubmitResultV2;
     SubmitResultV1: typeof schema.SubmitResultV1;
     LegacyExecutionResult: typeof schema.LegacyExecutionResult;
-    FunctionCallArgs: typeof schema.FunctionCallArgs;
+    CallArgs: typeof schema.CallArgs;
+    FunctionCallArgsV2: typeof schema.FunctionCallArgsV2;
+    FunctionCallArgsV1: typeof schema.FunctionCallArgsV1;
     GetChainID: typeof schema.GetChainID;
     GetStorageAtArgs: typeof schema.GetStorageAtArgs;
     LogEventWithAddress: typeof schema.LogEventWithAddress;

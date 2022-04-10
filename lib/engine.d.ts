@@ -3,7 +3,7 @@ import { AccountID, Address } from './account.js';
 import { BlockHash, BlockHeight, BlockID, BlockOptions, BlockProxy } from './block.js';
 import { KeyStore } from './key_store.js';
 import { Quantity, Result, U256 } from './prelude.js';
-import { SubmitResult, OutOfGas } from './schema.js';
+import { OutOfGas, GasBurned, WrappedSubmitResult } from './schema.js';
 import { TransactionID } from './transaction.js';
 import * as NEAR from 'near-api-js';
 import { ResErr } from '@hqoss/monads/dist/lib/result/result';
@@ -16,6 +16,8 @@ export declare type Error = string;
 export interface TransactionOutcome {
     id: TransactionID;
     output: Uint8Array;
+    gasBurned?: GasBurned;
+    tx?: string;
 }
 export interface BlockInfo {
     hash: BlockHash;
@@ -62,6 +64,10 @@ export declare class EngineState {
     storage: EngineStorage;
     constructor(storage?: EngineStorage);
 }
+export interface TransactionErrorDetails {
+    tx?: string;
+    gasBurned?: GasBurned;
+}
 export declare class Engine {
     readonly near: NEAR.Near;
     readonly keyStore: KeyStore;
@@ -87,8 +93,8 @@ export declare class Engine {
     getBridgeProvider(options?: ViewOptions): Promise<Result<AccountID, Error>>;
     getChainID(options?: ViewOptions): Promise<Result<ChainID, Error>>;
     deployCode(bytecode: Bytecodeish): Promise<Result<Address, Error>>;
-    call(contract: Address, input: Uint8Array | string): Promise<Result<Uint8Array, Error>>;
-    submit(input: Uint8Array | string): Promise<Result<SubmitResult, Error>>;
+    call(contract: Address, input: Uint8Array | string, value?: number | bigint | string): Promise<Result<Uint8Array, Error>>;
+    submit(input: Uint8Array | string): Promise<Result<WrappedSubmitResult, Error>>;
     view(sender: Address, address: Address, amount: Quantity, input: Uint8Array | string, options?: ViewOptions): Promise<Result<Uint8Array | ResErr<unknown, OutOfGas>, Error>>;
     getCode(address: Address, options?: ViewOptions): Promise<Result<Bytecode, Error>>;
     getBalance(address: Address, options?: ViewOptions): Promise<Result<U256, Error>>;
@@ -99,5 +105,8 @@ export declare class Engine {
     getStorage(): Promise<Result<EngineStorage, Error>>;
     protected callFunction(methodName: string, args?: Uint8Array, options?: ViewOptions): Promise<Result<Buffer, Error>>;
     protected callMutativeFunction(methodName: string, args?: Uint8Array): Promise<Result<TransactionOutcome, Error>>;
+    private prepareAmount;
     private prepareInput;
+    private errorWithDetails;
+    private transactionGasBurned;
 }
